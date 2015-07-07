@@ -6,8 +6,6 @@ from sys import argv
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter, FileType
 
 import doctest
-
-newstring=""
 FastQ=open('FASTQ', 'r')
 errorchance=0
 placemark=0
@@ -105,74 +103,46 @@ def phredvalues_version8(line):
     Pscorelist.append(Pscore)
     return Pscorelist
 
-def phredscore(FastQ):
-    """reads lines in a file and searches for the lines before a phred score line and then applies phredvalues_version8()
-    :param fastq_fh: the file name/handle
-    :return: a list of all the phred score values for a file
-    """
-    Pscorelist=[]
-    for line in FastQ:
-        if '+' in line:
-            line=next(FastQ)
-            Pscorelist=phredvalues_version8(line)
-        elif '-' in line:
-            line=next(FastQ)
-            Pscorelist=phredvalues_version8(line)
-    return Pscorelist
 
-
-
-
-
-
-
-def errorproducer(FastQ):
+def errorproducer(fastq_fh):
     """
     seeds in errors to base pairs according to a total phred score for the corresponding phred score line
     :param fastq_fh: the file handle/name
     :return:lines with errors seeded into them
     """
 
-    errorcount=0
+    error_count=0
     totaltotalbase=0
     Pscoreplacemark=0
-    dankhold=0
+    #dankhold=0
     Pscorelist=[]
-    for line in FastQ:
-        print line
-        if dankhold==0:
-            Pscorelist=phredscore(FastQ)
-        dankhold=1
+    for line in fastq_fh:
+        #if dankhold==0:
+            #Pscorelist=phredscore(FastQ)
+        #dankhold=1
         totalbase=0
         placemark=0
         newstring=""
         line=line.rstrip()
         #getting rid of \'s
         if 'B' in line:
-            print 'yes'
             continue
-        print 'no'
         if '@' in line:
-            print 'noooo'
             continue
-        print 'yes'
         if '}' in line:
             continue
-        print 'yes'
+        if 'G' in line:
+            if 'T' in line:
+                BaseLine=line
+                line=next(fastq_fh)
         if '+' in line:
-            continue
-        print 'yes'
-        if '-' in line:
-            continue
-        print 'yes'
-        if ';' in line:
-            continue
-        print 'yes'
-        #really sloppily discounting any lines apart from those with basepairs
-        totalbase=len(line)
+            Phredline=next(fastq_fh)
+            Pscorelist=phredvalues_version8(Phredline)
+        #really baller way of ordering Basepair lines and finding Phredscore
+        totalbase=len(BaseLine)
         totaltotalbase+=totalbase
         Pscoreplacemark+=1
-        for basepair in line:
+        for basepair in BaseLine:
             placemark+=1
             errorchance=Pscorelist[Pscoreplacemark-1]
             int(errorchance)
@@ -183,7 +153,7 @@ def errorproducer(FastQ):
                 continue
                 #if the number generated is higher than the produced error chance, the base pair is added to a new line
             else:
-                errorcount+=1
+                error_count+=1
                 if basepair==('G'):
                     if genedice < errorchance/3:
                         newstring+='A'
@@ -226,8 +196,29 @@ def errorproducer(FastQ):
                         continue
                     #if the generated number is lower than the error chance, then a random base pair is put in its place on the list
         print newstring
-        print errorcount, 'errors'
-        print errorcount/totaltotalbase*100, 'percentage of errors'
+        print error_count, 'errors'
+        print error_count/totaltotalbase*100, 'percentage of errors'
     return newstring
-woah=errorproducer(FastQ)
-print woah
+
+def parserthing(arglist=None):
+    description='makes your files worse'
+    parser=ArgumentParser(description=description,
+                          formatter_class=ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--fastq','-f', help='put in fastq here', required=True, type=FileType('r'))
+    #set up command to open the named fastq file in read format
+    options = parser.parse_args(args=arglist)
+    return options
+
+def main(args):
+    options=parserthing(args[1:])
+    errorproducer(options.fastq)
+    #runs the errorproduced with given file
+
+
+
+
+
+
+
+if __name__ == '__main__':
+    main(argv)
