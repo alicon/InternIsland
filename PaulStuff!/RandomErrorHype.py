@@ -4,11 +4,6 @@ import random
 import argparse
 from sys import argv
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter, FileType
-
-import doctest
-FastQ=open('FASTQ', 'r')
-errorchance=0
-placemark=0
 Pscorelist=[]
 
 def phredvalues_version8(line):
@@ -16,91 +11,91 @@ def phredvalues_version8(line):
     :param line: a line with ASCII characters that represents a phred value for base pairs
     :return: A list with the added total phred value for the line
     """
-    Pscore=0
+    Ph_score=0
     for ASCII in line:
         if ASCII is '"':
-            Pscore+=.79433
+            Ph_score+=.79433
         if ASCII is '#':
-            Pscore+=.63096
+            Ph_score+=.63096
         if ASCII is '$':
-            Pscore+=.50119
+            Ph_score+=.50119
         if ASCII is '%':
-            Pscore+=.39811
+            Ph_score+=.39811
         if ASCII is '&':
-            Pscore+=.31623
+            Ph_score+=.31623
         if ASCII is "'":
-            Pscore+=.25119
+            Ph_score+=.25119
         if ASCII is '(':
-            Pscore+=.19953
+            Ph_score+=.19953
         if ASCII is ')':
-            Pscore+=.15849
+            Ph_score+=.15849
         if ASCII is '*':
-            Pscore+=.12589
+            Ph_score+=.12589
         if ASCII is '+':
-            Pscore+=.10000
+            Ph_score+=.10000
         if ASCII is ',':
-            Pscore+=.07043
+            Ph_score+=.07043
         if ASCII is '-':
-            Pscore+=.06310
+            Ph_score+=.06310
         if ASCII is '.':
-            Pscore+=.05012
+            Ph_score+=.05012
         if ASCII is '/':
-            Pscore+=.03981
+            Ph_score+=.03981
         if ASCII is '0':
-            Pscore+=.03162
+            Ph_score+=.03162
         if ASCII is '1':
-            Pscore+=.02512
+            Ph_score+=.02512
         if ASCII is '2':
-            Pscore+=.01995
+            Ph_score+=.01995
         if ASCII is '3':
-            Pscore+=.01585
+            Ph_score+=.01585
         if ASCII is '4':
-            Pscore+=.01259
+            Ph_score+=.01259
         if ASCII is '5':
-            Pscore+=.01000
+            Ph_score+=.01000
         if ASCII is '6':
-            Pscore+=.00794
+            Ph_score+=.00794
         if ASCII is '7':
-            Pscore+=.00631
+            Ph_score+=.00631
         if ASCII is '8':
-            Pscore+=.00501
+            Ph_score+=.00501
         if ASCII is '9':
-            Pscore+=.00398
+            Ph_score+=.00398
         if ASCII is ':':
-            Pscore+=.00316
+            Ph_score+=.00316
         if ASCII is ';':
-            Pscore+=.00251
+            Ph_score+=.00251
         if ASCII is '<':
-            Pscore+=.00200
+            Ph_score+=.00200
         if ASCII is '=':
-            Pscore+=.00158
+            Ph_score+=.00158
         if ASCII is '>':
-            Pscore+=.00126
+            Ph_score+=.00126
         if ASCII is '?':
-            Pscore+=.00100
+            Ph_score+=.00100
         if ASCII is '@':
-            Pscore+=.00079
+            Ph_score+=.00079
         if ASCII is 'A':
-            Pscore+=.00063
+            Ph_score+=.00063
         if ASCII is 'B':
-            Pscore+=.00050
+            Ph_score+=.00050
         if ASCII is 'C':
-            Pscore+=.00040
+            Ph_score+=.00040
         if ASCII is 'D':
-            Pscore+=.00032
+            Ph_score+=.00032
         if ASCII is 'E':
-            Pscore+=.00025
+            Ph_score+=.00025
         if ASCII is 'F':
-            Pscore+=.00020
+            Ph_score+=.00020
         if ASCII is 'G':
-            Pscore+=.00016
+            Ph_score+=.00016
         if ASCII is 'H':
-            Pscore+=.00013
+            Ph_score+=.00013
         if ASCII is 'I':
-            Pscore+=.00010
+            Ph_score+=.00010
         if ASCII is 'J':
-            Pscore+=.00008
-    Pscorelist.append(Pscore)
+            Ph_score+=.00008
+    Pscorelist.append(Ph_score)
     return Pscorelist
 
 
@@ -112,16 +107,11 @@ def errorproducer(fastq_fh):
     """
 
     error_count=0
-    totaltotalbase=0
-    Pscoreplacemark=0
-    #dankhold=0
+    total_total_base=0
+    Pscore_placemark=0
     Pscorelist=[]
     for line in fastq_fh:
-        #if dankhold==0:
-            #Pscorelist=phredscore(FastQ)
-        #dankhold=1
-        totalbase=0
-        placemark=0
+        place_mark=0
         newstring=""
         line=line.rstrip()
         #getting rid of \'s
@@ -140,64 +130,64 @@ def errorproducer(fastq_fh):
             Pscorelist=phredvalues_version8(Phredline)
         #really baller way of ordering Basepair lines and finding Phredscore
         totalbase=len(BaseLine)
-        totaltotalbase+=totalbase
-        Pscoreplacemark+=1
+        total_total_base+=totalbase
+        Pscore_placemark+=1
         for basepair in BaseLine:
-            placemark+=1
-            errorchance=Pscorelist[Pscoreplacemark-1]
-            int(errorchance)
-            genedice=random.random()
+            place_mark+=1
+            error_chance=Pscorelist[Pscore_placemark-1]
+            int(error_chance)
+            gene_dice=random.random()
             #checks place in line then produces a random number based on it
-            if genedice > errorchance:
+            if gene_dice > error_chance:
                 newstring+=basepair
                 continue
                 #if the number generated is higher than the produced error chance, the base pair is added to a new line
             else:
                 error_count+=1
                 if basepair==('G'):
-                    if genedice < errorchance/3:
+                    if gene_dice < error_chance/3:
                         newstring+='A'
                         continue
-                    if genedice < 2*errorchance/3:
+                    if gene_dice < 2*error_chance/3:
                        newstring+='C'
                        continue
-                    if genedice <= errorchance:
+                    if gene_dice <= error_chance:
                         newstring+='T'
                         continue
                 if basepair==('C'):
-                    if genedice < errorchance/3:
+                    if gene_dice < error_chance/3:
                         newstring+='G'
                         continue
-                    if genedice < 2*errorchance/3:
+                    if gene_dice < 2*error_chance/3:
                        newstring+='A'
                        continue
-                    if genedice <= errorchance:
+                    if gene_dice <= error_chance:
                         newstring+='T'
                         continue
                 if basepair==('A'):
-                    if genedice < errorchance/3:
+                    if gene_dice < error_chance/3:
                         newstring+='G'
                         continue
-                    if genedice < 2*errorchance/3:
+                    if gene_dice < 2*error_chance/3:
                         newstring+='C'
                         continue
-                    if genedice <= errorchance:
+                    if gene_dice <= error_chance:
                         newstring+='T'
                         continue
                 if basepair==('T'):
-                    if genedice < errorchance/3:
+                    if gene_dice < error_chance/3:
                         newstring+='A'
                         continue
-                    if genedice < 2*errorchance/3:
+                    if gene_dice < 2*error_chance/3:
                         newstring+='C'
                         continue
-                    if genedice <= errorchance:
+                    if gene_dice <= error_chance:
                         newstring+='G'
                         continue
                     #if the generated number is lower than the error chance, then a random base pair is put in its place on the list
         print newstring
         print error_count, 'errors'
-        print error_count/totaltotalbase*100, 'percentage of errors'
+        print error_count/total_total_base*100, 'percentage of errors'
     return newstring
 
 def parserthing(arglist=None):
