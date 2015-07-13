@@ -112,6 +112,16 @@ def parse_cmdline_params(arg_list=None):
                         help="Number of iterations",
                         required=False,
                         type=int)
+
+    parser.add_argument("--l","-l",
+                        help="Negative binomial float",
+                        required=False,
+                        type=float)
+
+    parser.add_argument("--b","-b",
+                        help="Negative Binomial int",
+                        required=False,
+                        type=int)
     # Parse options
     opts = parser.parse_args(args=arg_list)
     return opts
@@ -135,7 +145,7 @@ def create_quality_scores(sequence):
     return new_ascii
 
 
-def cloning(infile, mean=1):
+def cloning(infile, mean=1, nb=False, b=None, l=None):
     """Creates defaultdict of names of sequences as keys with sequences as values given a fastq file
 
     :param str infile: name of the file to be read in and made a dict of
@@ -146,23 +156,23 @@ def cloning(infile, mean=1):
     for line in infile:
         line = line.rstrip()
         if line[0] == '@':
-            n = number_of_clones(mean)
+            if nb:
+                n = number_of_clones_nb(b, l)
+            else:
+                n = number_of_clones(mean)
             #Creates key of the name of the sequence and sets the value to the sequence
             next_line = next(infile).rstrip()
             for x in range(0, n):
                 sequences[line[1:].rstrip() + ' ' + str(x+1)] = next_line
     return sequences
 
+def number_of_clones_nb(mean, l):
+    return numpy.random.negative_binomial(mean,l)
+
 
 def number_of_clones(mean):
     clone_number = numpy.random.poisson(mean, 1)
     return clone_number
-
-
-def create_cloned_file(infile, mean):
-    for line in infile:
-        outfile = cloning(line,number_of_clones(mean))
-    return outfile
 
 def main(args):
     """Main method
@@ -171,7 +181,11 @@ def main(args):
     :return: None
     """
     opts = parse_cmdline_params(args[1:])
-    sequences = cloning(opts.fastq, opts.n)
+    if opts.b is not None and opts.l is not None:
+        nb = True
+    else:
+        nb = False
+    sequences = cloning(opts.fastq, opts.n, nb, opts.b, opts.l)
     # sequences = create_fastq_dict('sampleFastq')
     total_error_num = 0
     total_errors = 0
