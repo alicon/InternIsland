@@ -16,6 +16,7 @@ from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter, FileType
 from collections import defaultdict
 from colors import red, blue, green, yellow, magenta
 import math
+import os
 
 
 def parse_cmdline_params(arg_list=None):
@@ -82,13 +83,13 @@ def is_error(base, error_str):
     error_bases = 'AGCTAG'
     error_bases_ind = random.randint(0, 2)
     if base == 'T':
-        error_str += red(error_bases[error_bases_ind], style='bold')
+        error_str += error_bases[error_bases_ind]
     elif base == 'A':
-        error_str += red(error_bases[error_bases_ind + 1], style='bold')
+        error_str += error_bases[error_bases_ind + 1]
     elif base == 'G':
-        error_str += red(error_bases[error_bases_ind + 2], style='bold')
+        error_str += error_bases[error_bases_ind + 2]
     elif base == 'C':
-        error_str += red(error_bases[error_bases_ind + 3], style='bold')
+        error_str += error_bases[error_bases_ind + 3]
 
     return error_str
 
@@ -145,7 +146,7 @@ def create_fastq_dict(infile, opts):
             next_line = next(infile).rstrip()
             sequences[line[1:].rstrip()] = next_line
             for x in range(0, n):
-                sequences[line[1:].rstrip() + '_' + str(x)] = next_line
+                sequences[line[1:].rstrip() + ' (' + str(x) + ')'] = next_line
     return sequences
 
 def print_results(fastq_dict, error_dict):
@@ -159,6 +160,13 @@ def print_results(fastq_dict, error_dict):
         print "{} no errors:    {}".format(key, fastq_dict[key])
         print "{} with errors:  {}\n".format(key, error_dict[key])
 
+def write_results_to_file(fastq_dict, error_dict, opts):
+    outfile = open(opts.fastq.name[:-6] + '_FastqErrorResult.txt', 'w')
+    for key in fastq_dict.keys():
+        outfile.writelines("{} no errors:    {}\n".format(key, fastq_dict[key]))
+        outfile.writelines("{} with errors:  {}\n\n".format(key, error_dict[key]))
+    print blue('Results written to {}'.format((os.getcwd() + '/' + opts.fastq.name[:-6] + '_FastqErrorResult.txt')))
+
 def main(args):
     """Main method
 
@@ -170,6 +178,7 @@ def main(args):
     fastq_dict = create_fastq_dict(infile, opts=opts)
     error_dict = decide_if_error(fastq_dict)
     print_results(fastq_dict, error_dict)
+    write_results_to_file(fastq_dict, error_dict, opts)
 
 if __name__ == '__main__':
     main(argv)
