@@ -8,15 +8,19 @@ from __future__ import division
 
 # Must install ansicolors module! Found at: https://pypi.python.org/pypi/ansicolors/1.0.2
 __author__ = 'samanthajohnson'
+__author__ = 'paulcomeau'
 
-import numpy
+import numpy as np
 import random
 from sys import argv
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter, FileType
 from collections import defaultdict
 from colors import red, blue, green, yellow, magenta
-import math
+from scipy.stats import mode
 import os
+import seaborn
+import matplotlib.pyplot as plt
+import pandas as pd
 
 
 def parse_cmdline_params(arg_list=None):
@@ -53,6 +57,7 @@ def parse_cmdline_params(arg_list=None):
     opts = parser.parse_args(args=arg_list)
     return opts
 
+
 def decide_if_error(fastq_dict):
     """Decides if error, calls the corresponding function, and creates a new dictionary with the errors added
 
@@ -72,6 +77,7 @@ def decide_if_error(fastq_dict):
                 error_str = is_not_error(base, error_str)
         error_dict[key] = error_str
     return error_dict
+
 
 def is_error(base, error_str):
     """Adds a randomly decided base onto the current error string
@@ -93,6 +99,7 @@ def is_error(base, error_str):
 
     return error_str
 
+
 def is_not_error(base, error_str):
     """Adds the base onto the error string
 
@@ -103,13 +110,14 @@ def is_not_error(base, error_str):
     error_str += base
     return error_str
 
+
 def poisson_clones(mean):
     """Given the mean, finds number of times to clone the line using poisson dist.
 
     :param float mean: the mean of the data
     :return int: number of times to clone the line using poisson dist.
     """
-    return numpy.random.poisson(mean, 1)
+    return np.random.poisson(mean, 1)
 
 
 def nb_clones(mean, variance):
@@ -119,7 +127,7 @@ def nb_clones(mean, variance):
     :param float variance: the standard deviation
     :return int: number of times to clone the line using neg. binomial distribution
     """
-    return numpy.random.negative_binomial(mean, variance)
+    return np.random.negative_binomial(mean, variance)
 
 
 def create_fastq_dict(infile, opts):
@@ -149,6 +157,7 @@ def create_fastq_dict(infile, opts):
                 sequences[line[1:].rstrip() + ' (' + str(x) + ')'] = next_line
     return sequences
 
+
 def print_results(fastq_dict, error_dict):
     """Prints the contents of the original dictionary and the error dictionary
 
@@ -160,12 +169,21 @@ def print_results(fastq_dict, error_dict):
         print "{} no errors:    {}".format(key, fastq_dict[key])
         print "{} with errors:  {}\n".format(key, error_dict[key])
 
+
 def write_results_to_file(fastq_dict, error_dict, opts):
+    """Writes the result of the cloning/error adding to a file in the cwd
+
+    :param defaultdict fastq_dict: original dictionary from file
+    :param defaultdict error_dict: cloned/error dictionary
+    :param args opts: the parsed arguments from the command line
+    :return None: Writes to file only
+    """
     outfile = open(opts.fastq.name[:-6] + '_FastqErrorResult.txt', 'w')
     for key in fastq_dict.keys():
         outfile.writelines("{} no errors:    {}\n".format(key, fastq_dict[key]))
         outfile.writelines("{} with errors:  {}\n\n".format(key, error_dict[key]))
     print blue('Results written to {}'.format((os.getcwd() + '/' + opts.fastq.name[:-6] + '_FastqErrorResult.txt')))
+
 
 def main(args):
     """Main method
@@ -173,12 +191,16 @@ def main(args):
     :param args: arguments
     :return: None
     """
+    print green('Running...')
     opts = parse_cmdline_params(args[1:])
     infile = opts.fastq
     fastq_dict = create_fastq_dict(infile, opts=opts)
     error_dict = decide_if_error(fastq_dict)
-    print_results(fastq_dict, error_dict)
-    write_results_to_file(fastq_dict, error_dict, opts)
+    if raw_input(blue('Would you like your results printed to the terminal? Answer y or n: ')) is 'y':
+        print_results(fastq_dict, error_dict)
+    if raw_input(blue('Would you like to write your results to a file? Answer y or n: ')) == 'y':
+        write_results_to_file(fastq_dict, error_dict, opts)
+    print green('Done')
 
 if __name__ == '__main__':
     main(argv)
