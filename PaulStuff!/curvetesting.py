@@ -5,6 +5,8 @@ import time
 start_time = time.time()
 from Bin_Depth import BinDepthArray
 from collections import OrderedDict
+a = open('60-0k_1_JH3968_S29_L001_R1_001.combined.molbar.trimmed.deduped.subset.fastq','r')
+
 from collections import defaultdict
 from sys import argv
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter, FileType
@@ -45,17 +47,19 @@ def curve_simulator(fastq_file):
                 if start_depth == end_depth:
                     occurence_differ = 0
                 base_add = occurence_differ/distance
-            temp_range = range(start_depth+1,end_depth)
+            temp_range = range(start_depth+1,end_depth+1)
             temp_check = start_depth
             if temp_check != 0:
                 for depth in temp_range:
                     if depth not in counted_depths:
+                        print float(counted_depths[start_depth])
                         if start_depth < end_depth:
                             counted_depths[depth] = float(counted_depths[start_depth])+base_add
                         if start_depth > end_depth:
                             counted_depths[depth] = float(counted_depths[start_depth])-base_add
                         if start_depth == end_depth:
                             counted_depths[depth] = float(counted_depths[start_depth])
+                        start_depth=depth
             start_depth = depth
     print counted_depths
     return counted_depths
@@ -129,5 +133,6 @@ def main(args):
 if __name__=='main':
     main(argv)
 
+print depth_selector(percentage_finder(curve_simulator(a)), 1000)
 print ("--%s seconds ---" % (time.time()-start_time))
 
