@@ -34,7 +34,7 @@ def parse_cmdline_params(arg_list=None):
                             formatter_class=ArgumentDefaultsHelpFormatter)
 
     parser.add_argument("--fastq", "-f",
-                        help="FASTQ file to process",
+                        help="FASTQ file to create a dist. from",
                         required=True,
                         type=FileType('r'))
 
@@ -58,12 +58,18 @@ def parse_cmdline_params(arg_list=None):
                              "The variance or standard deviation for neg. binomial distribution.",
                         required=False,
                         type=float)
+
     parser.add_argument("--status_updates", "-s",
                         help="Enable status updates with True"
                              "The variance or standard deviation for neg. binomial distribution.",
                         default=False,
                         required=False,
                         type=bool)
+
+    parser.add_argument("--insilico", "-i",
+                        help="The file you actually want to run errors on",
+                        required=False,
+                        type=FileType('r'))
     opts = parser.parse_args(args=arg_list)
     return opts
 
@@ -121,18 +127,19 @@ def is_not_error(base, error_str):
     return error_str
 
 
-def poisson_clones(mean, line_num):
+def poisson_clones(mean, line_num, opts):
     """Given the mean, finds number of times to clone the line using poisson dist.
 
     :param float mean: the mean of the data
     :param int line_num: the number of lines in the file
     :return int: number of times to clone the line using poisson dist.
     """
-    print yellow("[STATUS] List created.")
+    if opts.status_updates:
+        print yellow("[STATUS] List created.")
     return np.random.poisson(mean, line_num)
 
 
-def nb_clones(mean, variance, line_num):
+def nb_clones(mean, variance, line_num, opts):
     """Given mean and variance, gives the number of times to clone using n.b. distribution
 
     :param float mean: the mean of the data
@@ -140,7 +147,8 @@ def nb_clones(mean, variance, line_num):
     :param int line_num: the number of lines in the file
     :return int: number of times to clone the line using neg. binomial distribution
     """
-    print yellow("[STATUS] List created.")
+    if opts.status_updates:
+        print yellow("[STATUS] List created.")
     return np.random.negative_binomial(mean, variance, line_num)
 
 def fastq_clones(opts, line_num):
@@ -151,7 +159,8 @@ def fastq_clones(opts, line_num):
     :return list data_list: the list of numbers selected from the file's distribution
     """
     data_list = give_clone_list(opts, line_num)
-    print yellow("[STATUS] List created.")
+    if opts.status_updates:
+        print yellow("[STATUS] List created.")
     return data_list
 
 
@@ -162,10 +171,11 @@ def find_line_nums(opts):
     :return int line_num: the number of sequences in the file from opts
     """
     line_num = 0
-    for line in opts.fastq:
+    for line in opts.insilico:
         if '@' in line:
             line_num += 1
-    print yellow("[STATUS] Found number of lines.")
+    if opts.status_updates:
+        print yellow("[STATUS] Found number of lines.")
     return line_num
 
 
@@ -184,15 +194,15 @@ def create_fastq_dict(infile, opts):
     cloned = opts.cloning
 
     if cloned == 1:
-        clones = poisson_clones(opts.mean, line_num)
+        clones = poisson_clones(opts.mean, line_num, opts)
     elif cloned == 2:
-        clones = nb_clones(opts.mean, opts.variance, line_num)
+        clones = nb_clones(opts.mean, opts.variance, line_num, opts)
     elif cloned == 3:
         clones = fastq_clones(opts, line_num)
     else:
         clones = [0] * line_num
 
-    print clones
+    #print clones
     infile.seek(0)
     sequences = defaultdict(str)
     line_counter = 1
@@ -208,8 +218,10 @@ def create_fastq_dict(infile, opts):
                 sequences[line[1:].rstrip() + ' (' + clone_num + ')'] = next_line
             #print sequences.keys()
             line_counter += 1
-            print yellow(("[STATUS] It's still going! {}".format(('.' * ((line_counter % 2) + 1)))))
-    print yellow("[STATUS] Dictionary created.")
+            if opts.status_updates:
+                print yellow(("[STATUS] It's still going! {}".format(('.' * ((line_counter % 2) + 1)))))
+    if opts.status_updates:
+        print yellow("[STATUS] Dictionary created.")
     return sequences
 
 
@@ -233,14 +245,14 @@ def write_results_to_file(fastq_dict, error_dict, opts):
     :param args opts: the parsed arguments from the command line
     :return None: Writes to file only
     """
-    outfile = open(opts.fastq.name[:-6] + '_FastqErrorResult.txt', 'w')
+    outfile = open(opts.insilico.name[:-6] + '_FastqErrorResult.txt', 'w')
     for key in fastq_dict.keys():
         outfile.writelines("{} no errors:    {}\n".format(key, fastq_dict[key]))
         outfile.writelines("{} with errors:  {}\n\n".format(key, error_dict[key]))
     print blue(''\
                'Results written to {}'.format((''\
                 '{}/{}_FastqErrorResult.txt'\
-                '').format(os.getcwd(), opts.fastq.name[:-6])))
+                '').format(os.getcwd(), opts.insilico.name[:-6])))
 
 
 def main(args):
@@ -251,10 +263,11 @@ def main(args):
     """
     print green('Running...')
     opts = parse_cmdline_params(args[1:])
-    infile = opts.fastq
+    infile = opts.insilico
     fastq_dict = create_fastq_dict(infile, opts)
     error_dict = decide_if_error(fastq_dict)
-    print yellow("[STATUS] Error dict created.")
+    if opts.status_updates:
+        print yellow("[STATUS] Error dict created.")
     if raw_input(blue('Would you like results printed to the terminal? Answer y or n: ')) is 'y':
         print_results(fastq_dict, error_dict)
     if raw_input(blue('Would you like to write the results to a file? Answer y or n: ')) is 'y':
