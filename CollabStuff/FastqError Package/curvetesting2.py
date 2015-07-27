@@ -5,10 +5,11 @@ import time
 start_time = time.time()
 from Bin_Depth import BinDepthArray
 from collections import OrderedDict
+#a = open('60-0k_1_JH3968_S29_L001_R1_001.combined.molbar.trimmed.deduped.subset.fastq','r')
+
 from collections import defaultdict
 from sys import argv
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter, FileType
-
 def array_range(data_array):
     """
     finds the range for a numbers in an array
@@ -22,7 +23,6 @@ def array_range(data_array):
 
 def array_counter(data_array):
     return data_array
-
 def curve_simulator(fastq_file):
     """
     creates a dictionary which gives an approximation for the chance of all bin depths occurring in the range of occurring bin depths
@@ -31,7 +31,6 @@ def curve_simulator(fastq_file):
     """
     counted_depths = defaultdict(float)
     bin_array = BinDepthArray(fastq_file)
-    #print bin_array
     fastq_range = array_range(bin_array)
     start_depth = 0
     for depth in bin_array:
@@ -48,7 +47,7 @@ def curve_simulator(fastq_file):
                 if start_depth == end_depth:
                     occurence_differ = 0
                 base_add = occurence_differ/distance
-            temp_range = range(start_depth+1,end_depth)
+            temp_range = range(start_depth+1,end_depth+1)
             temp_check = start_depth
             if temp_check != 0:
                 for depth in temp_range:
@@ -59,6 +58,7 @@ def curve_simulator(fastq_file):
                             counted_depths[depth] = float(counted_depths[start_depth])-base_add
                         if start_depth == end_depth:
                             counted_depths[depth] = float(counted_depths[start_depth])
+                        start_depth=depth
             start_depth = depth
     #print counted_depths
     return counted_depths
@@ -105,7 +105,6 @@ def depth_selector(given_dict_percent, num_reads_to_model):
                 depth_list.append(key)
                 break
     return depth_list
-
 def parserthing(arglist=None):
     """
     gives arguments that allows for files to be opened by the program
@@ -121,6 +120,11 @@ def parserthing(arglist=None):
     options = parser.parse_args(args=arglist)
     return options
 
+def give_clone_list(options, num_depths):
+    clone_list = depth_selector(percentage_finder(curve_simulator(options.fastq)), num_depths)
+    #print clone_list
+    return clone_list
+
 def main(args):
     """
     uses argurments from parserthing to find file that is used with errorproducer
@@ -128,12 +132,11 @@ def main(args):
     :return: running errorproducer with the given file
     """
     options = parserthing(args[1:])
-    infile = options.fastq
-    depth_selector(percentage_finder(curve_simulator(infile)), 1)
+    give_clone_list(options, 1)
     #runs the errorproduced with given file
+    print ("--Curve Testing: %s seconds ---" % (time.time()-start_time))
 
 if __name__ == '__main__':
     main(argv)
 
-print ("--%s seconds ---" % (time.time()-start_time))
 
