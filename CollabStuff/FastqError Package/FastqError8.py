@@ -71,6 +71,7 @@ def parse_cmdline_params(arg_list=None):
                         required=False,
                         type=FileType('r'))
     opts = parser.parse_args(args=arg_list)
+    print opts
     return opts
 
 
